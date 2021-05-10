@@ -64,15 +64,15 @@ func onFSInfo(ctx context.Context, w *response, userHandle Handler) error {
 	}
 
 	// TODO: these aren't great indications of support, really.
-	if _, ok := fs.(billy.Symlink); ok {
-		res.Properties |= FSInfoPropertyLink
-		res.Properties |= FSInfoPropertySymlink
-	}
+	// if _, ok := fs.(billy.Symlink); ok {
+	// 	res.Properties |= FSInfoPropertyLink
+	// 	res.Properties |= FSInfoPropertySymlink
+	// }
 	// TODO: if the nfs share spans multiple virtual mounts, may need
 	// to support granular PATHINFO responses.
 	res.Properties |= FSInfoPropertyHomogeneous
 	// TODO: not a perfect indicator
-	if billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if fs.CapabilityCheck(billy.WriteCapability) {
 		res.Properties |= FSInfoPropertyCanSetTime
 	}
 	// TODO: this whole struct should be specifiable by the userhandler.

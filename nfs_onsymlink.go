@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
@@ -30,7 +31,7 @@ func onSymlink(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusROFS, os.ErrPermission}
 	}
 
@@ -38,11 +39,11 @@ func onSymlink(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusNameTooLong, os.ErrInvalid}
 	}
 
-	newFilePath := fs.Join(append(path, string(obj.Filename))...)
+	newFilePath := filepath.Join(append(path, string(obj.Filename))...)
 	if _, err := fs.Stat(newFilePath); err == nil {
 		return &NFSStatusError{NFSStatusExist, os.ErrExist}
 	}
-	if s, err := fs.Stat(fs.Join(path...)); err != nil {
+	if s, err := fs.Stat(filepath.Join(path...)); err != nil {
 		return &NFSStatusError{NFSStatusAccess, err}
 	} else if !s.IsDir() {
 		return &NFSStatusError{NFSStatusNotDir, nil}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
@@ -19,7 +20,7 @@ func onGetAttr(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
 
-	info, err := fs.Stat(fs.Join(path...))
+	info, err := fs.Stat(filepath.Join(path...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}

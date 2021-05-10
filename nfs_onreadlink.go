@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
@@ -19,9 +20,9 @@ func onReadLink(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
 
-	out, err := fs.Readlink(fs.Join(path...))
+	out, err := fs.Readlink(filepath.Join(path...))
 	if err != nil {
-		if info, err := fs.Stat(fs.Join(path...)); err == nil {
+		if info, err := fs.Stat(filepath.Join(path...)); err == nil {
 			if info.Mode()&os.ModeSymlink == 0 {
 				return &NFSStatusError{NFSStatusInval, err}
 			}

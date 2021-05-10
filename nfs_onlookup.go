@@ -5,12 +5,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
-	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
+	"github.com/willscott/go-nfs/filesystem"
 )
 
-func lookupSuccessResponse(handle []byte, entPath, dirPath []string, fs billy.Filesystem) ([]byte, error) {
+func lookupSuccessResponse(handle []byte, entPath, dirPath []string, fs filesystem.FS) ([]byte, error) {
 	writer := bytes.NewBuffer([]byte{})
 	if err := xdr.Write(writer, uint32(NFSStatusOk)); err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func onLookup(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	contents, err := fs.ReadDir(fs.Join(p...))
+	contents, err := filesystem.ReadDir(fs, filepath.Join(p...))
 	if err != nil {
 		return &NFSStatusError{NFSStatusNotDir, err}
 	}

@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
@@ -40,7 +41,7 @@ func onWrite(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusROFS, os.ErrPermission}
 	}
 	if len(req.Data) > math.MaxInt32 || req.Count > math.MaxInt32 {
@@ -51,7 +52,7 @@ func onWrite(ctx context.Context, w *response, userHandle Handler) error {
 	}
 
 	// stat first for pre-op wcc.
-	info, err := fs.Stat(fs.Join(path...))
+	info, err := fs.Stat(filepath.Join(path...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}
@@ -64,7 +65,7 @@ func onWrite(ctx context.Context, w *response, userHandle Handler) error {
 	preOpCache := ToFileAttribute(info).AsCache()
 
 	// now the actual op.
-	file, err := fs.OpenFile(fs.Join(path...), os.O_RDWR, info.Mode().Perm())
+	file, err := fs.OpenFile(filepath.Join(path...), os.O_RDWR, info.Mode().Perm())
 	if err != nil {
 		return &NFSStatusError{NFSStatusAccess, err}
 	}

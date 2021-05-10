@@ -22,7 +22,7 @@ func onCommit(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusServerFault, os.ErrPermission}
 	}
 

@@ -2,50 +2,62 @@ package helpers
 
 import (
 	"context"
+	"log"
 	"net"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs"
+	"github.com/willscott/go-nfs/filesystem"
+	"github.com/willscott/go-nfs/filesystem/basefs"
+)
+
+const (
+	defaultCreateMode = 0755
 )
 
 // NewNullAuthHandler creates a handler for the provided filesystem
-func NewNullAuthHandler(fs billy.Filesystem) nfs.Handler {
+func NewNullAuthHandler(fs filesystem.FS) nfs.Handler {
 	return &NullAuthHandler{fs}
 }
 
 // NullAuthHandler returns a NFS backing that exposes a given file system in response to all mount requests.
 type NullAuthHandler struct {
-	fs billy.Filesystem
+	fs filesystem.FS
 }
 
 // Mount backs Mount RPC Requests, allowing for access control policies.
-func (h *NullAuthHandler) Mount(ctx context.Context, conn net.Conn, req nfs.MountRequest) (status nfs.MountStatus, hndl billy.Filesystem, auths []nfs.AuthFlavor) {
+func (h *NullAuthHandler) Mount(ctx context.Context, conn net.Conn, req nfs.MountRequest) (status nfs.MountStatus, hndl filesystem.FS, auths []nfs.AuthFlavor) {
 	status = nfs.MountStatusOk
-	hndl = h.fs
+	if err := h.fs.MkdirAll(string(req.Dirpath), defaultCreateMode); err != nil {
+		// TODO:
+		log.Printf("mout create dir error on: %v", err.Error())
+	}
+	hndl = basefs.NewBasePathFS(h.fs, string(req.Dirpath))
+	// hndl = h.fs
 	auths = []nfs.AuthFlavor{nfs.AuthFlavorNull}
 	return
 }
 
 // Change provides an interface for updating file attributes.
-func (h *NullAuthHandler) Change(fs billy.Filesystem) billy.Change {
-	if c, ok := h.fs.(billy.Change); ok {
+func (h *NullAuthHandler) Change(fs filesystem.FS) billy.Change {
+	if c, ok := fs.(billy.Change); ok {
 		return c
 	}
 	return nil
 }
 
 // FSStat provides information about a filesystem.
-func (h *NullAuthHandler) FSStat(ctx context.Context, f billy.Filesystem, s *nfs.FSStat) error {
+func (h *NullAuthHandler) FSStat(ctx context.Context, f filesystem.FS, s *nfs.FSStat) error {
 	return nil
 }
 
 // ToHandle handled by CachingHandler
-func (h *NullAuthHandler) ToHandle(f billy.Filesystem, s []string) []byte {
+func (h *NullAuthHandler) ToHandle(f filesystem.FS, s []string) []byte {
 	return []byte{}
 }
 
 // FromHandle handled by CachingHandler
-func (h *NullAuthHandler) FromHandle([]byte) (billy.Filesystem, []string, error) {
+func (h *NullAuthHandler) FromHandle([]byte) (filesystem.FS, []string, error) {
 	return nil, []string{}, nil
 }
 

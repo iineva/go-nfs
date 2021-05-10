@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 )
@@ -42,7 +43,7 @@ func onRead(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
 
-	fh, err := fs.Open(fs.Join(path...))
+	fh, err := fs.Open(filepath.Join(path...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}
@@ -53,7 +54,7 @@ func onRead(ctx context.Context, w *response, userHandle Handler) error {
 	resp := nfsReadResponse{}
 
 	if obj.Count > CheckRead {
-		info, err := fs.Stat(fs.Join(path...))
+		info, err := fs.Stat(filepath.Join(path...))
 		if err != nil {
 			return &NFSStatusError{NFSStatusAccess, err}
 		}

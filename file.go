@@ -6,11 +6,13 @@ import (
 	"log"
 	"math"
 	"os"
+	"path/filepath"
 	"time"
 
-	"github.com/go-git/go-billy/v5"
+	billy "github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
 	"github.com/willscott/go-nfs/file"
+	"github.com/willscott/go-nfs/filesystem"
 )
 
 // FileAttribute holds metadata about a filesystem object
@@ -128,10 +130,10 @@ func ToFileAttribute(info os.FileInfo) *FileAttribute {
 }
 
 // tryStat attempts to create a FileAttribute from a path.
-func tryStat(fs billy.Filesystem, path []string) *FileAttribute {
-	attrs, err := fs.Stat(fs.Join(path...))
+func tryStat(fs filesystem.FS, path []string) *FileAttribute {
+	attrs, err := fs.Stat(filepath.Join(path...))
 	if err != nil || attrs == nil {
-		log.Printf("err loading attrs for %s: %v", fs.Join(path...), err)
+		log.Printf("err loading attrs for %s: %v", filepath.Join(path...), err)
 		return nil
 	}
 	return ToFileAttribute(attrs)
@@ -196,8 +198,9 @@ type SetFileAttributes struct {
 
 // Apply uses a `Change` implementation to set defined attributes on a
 // provided file.
-func (s *SetFileAttributes) Apply(changer billy.Change, fs billy.Filesystem, file string) error {
-	curOS, err := fs.Lstat(file)
+func (s *SetFileAttributes) Apply(changer billy.Change, fs filesystem.FS, file string) error {
+	// TODO: handle LstatIfPossible
+	curOS, _, err := fs.LstatIfPossible(file)
 	if errors.Is(err, os.ErrNotExist) {
 		return &NFSStatusError{NFSStatusNoEnt, os.ErrNotExist}
 	} else if errors.Is(err, os.ErrPermission) {
@@ -246,6 +249,7 @@ func (s *SetFileAttributes) Apply(changer billy.Change, fs billy.Filesystem, fil
 		if curr.Mode()&os.ModeSymlink != 0 {
 			return &NFSStatusError{NFSStatusNotSupp, os.ErrInvalid}
 		}
+		// fp, err := fs.OpenFile(file, os.O_WRONLY, 0)
 		fp, err := fs.OpenFile(file, os.O_WRONLY|os.O_EXCL, 0)
 		if errors.Is(err, os.ErrPermission) {
 			return &NFSStatusError{NFSStatusAccess, err}

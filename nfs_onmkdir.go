@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
@@ -30,7 +31,7 @@ func onMkdir(ctx context.Context, w *response, userHandle Handler) error {
 	if err != nil {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusROFS, os.ErrPermission}
 	}
 
@@ -42,13 +43,13 @@ func onMkdir(ctx context.Context, w *response, userHandle Handler) error {
 	}
 
 	newFolder := append(path, string(obj.Filename))
-	newFolderPath := fs.Join(newFolder...)
+	newFolderPath := filepath.Join(newFolder...)
 	if s, err := fs.Stat(newFolderPath); err == nil {
 		if s.IsDir() {
 			return &NFSStatusError{NFSStatusExist, nil}
 		}
 	} else {
-		if s, err := fs.Stat(fs.Join(path...)); err != nil {
+		if s, err := fs.Stat(filepath.Join(path...)); err != nil {
 			return &NFSStatusError{NFSStatusAccess, err}
 		} else if !s.IsDir() {
 			return &NFSStatusError{NFSStatusNotDir, nil}

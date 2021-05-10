@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
@@ -20,7 +21,7 @@ func onRemove(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
 
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusROFS, os.ErrPermission}
 	}
 
@@ -28,7 +29,7 @@ func onRemove(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusNameTooLong, nil}
 	}
 
-	dirInfo, err := fs.Stat(fs.Join(path...))
+	dirInfo, err := fs.Stat(filepath.Join(path...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}
@@ -43,7 +44,7 @@ func onRemove(ctx context.Context, w *response, userHandle Handler) error {
 	}
 	preCacheData := ToFileAttribute(dirInfo).AsCache()
 
-	toDelete := fs.Join(append(path, string(obj.Filename))...)
+	toDelete := filepath.Join(append(path, string(obj.Filename))...)
 
 	err = fs.Remove(toDelete)
 	if err != nil {

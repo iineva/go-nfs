@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"syscall"
 
@@ -28,7 +29,7 @@ func onSetAttr(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusInval, err}
 	}
 
-	info, err := fs.Lstat(fs.Join(path...))
+	info, err := fs.Lstat(filepath.Join(path...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}
@@ -63,12 +64,12 @@ func onSetAttr(ctx context.Context, w *response, userHandle Handler) error {
 	TIME_GOOD:
 	}
 
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusROFS, os.ErrPermission}
 	}
 
 	changer := userHandle.Change(fs)
-	if err := attrs.Apply(changer, fs, fs.Join(path...)); err != nil {
+	if err := attrs.Apply(changer, fs, filepath.Join(path...)); err != nil {
 		// Already an nfsstatuserror
 		return err
 	}

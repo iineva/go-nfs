@@ -7,9 +7,11 @@ import (
 	"encoding/binary"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/willscott/go-nfs-client/nfs/xdr"
+	"github.com/willscott/go-nfs/filesystem"
 )
 
 type readDirArgs struct {
@@ -39,7 +41,7 @@ func onReadDir(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusStale, err}
 	}
 
-	contents, err := fs.ReadDir(fs.Join(p...))
+	contents, err := filesystem.ReadDir(fs, filepath.Join(p...))
 	if err != nil {
 		if os.IsPermission(err) {
 			return &NFSStatusError{NFSStatusAccess, err}

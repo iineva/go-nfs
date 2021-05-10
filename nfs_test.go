@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	nfs "github.com/willscott/go-nfs"
+	"github.com/willscott/go-nfs/filesystem/basefs"
 	"github.com/willscott/go-nfs/helpers"
 
-	"github.com/go-git/go-billy/v5/memfs"
 	nfsc "github.com/willscott/go-nfs-client/nfs"
 	rpc "github.com/willscott/go-nfs-client/nfs/rpc"
 )
@@ -20,7 +20,7 @@ func TestNFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mem := memfs.New()
+	mem := basefs.NewMemMapFS()
 	// File needs to exist in the root for memfs to acknowledge the root exists.
 	_, _ = mem.Create("/test")
 

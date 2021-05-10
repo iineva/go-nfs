@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/willscott/go-nfs-client/nfs/xdr"
@@ -35,7 +36,7 @@ func onRename(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusNotSupp, os.ErrPermission}
 	}
 
-	if !billy.CapabilityCheck(fs, billy.WriteCapability) {
+	if !fs.CapabilityCheck(billy.WriteCapability) {
 		return &NFSStatusError{NFSStatusROFS, os.ErrPermission}
 	}
 
@@ -43,7 +44,7 @@ func onRename(ctx context.Context, w *response, userHandle Handler) error {
 		return &NFSStatusError{NFSStatusNameTooLong, os.ErrInvalid}
 	}
 
-	fromDirInfo, err := fs.Stat(fs.Join(fromPath...))
+	fromDirInfo, err := fs.Stat(filepath.Join(fromPath...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}
@@ -55,7 +56,7 @@ func onRename(ctx context.Context, w *response, userHandle Handler) error {
 	}
 	preCacheData := ToFileAttribute(fromDirInfo).AsCache()
 
-	toDirInfo, err := fs.Stat(fs.Join(toPath...))
+	toDirInfo, err := fs.Stat(filepath.Join(toPath...))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &NFSStatusError{NFSStatusNoEnt, err}
@@ -67,8 +68,8 @@ func onRename(ctx context.Context, w *response, userHandle Handler) error {
 	}
 	preDestData := ToFileAttribute(toDirInfo).AsCache()
 
-	fromLoc := fs.Join(append(fromPath, string(from.Filename))...)
-	toLoc := fs.Join(append(toPath, string(to.Filename))...)
+	fromLoc := filepath.Join(append(fromPath, string(from.Filename))...)
+	toLoc := filepath.Join(append(toPath, string(to.Filename))...)
 
 	err = fs.Rename(fromLoc, toLoc)
 	if err != nil {
