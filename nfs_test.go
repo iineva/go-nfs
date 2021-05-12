@@ -86,14 +86,15 @@ func TestNFS(t *testing.T) {
 		t.Fatal("written does not match expected")
 	}
 
-	// for test nfs.ReadDirPlus in case of many files
-	dirF1, err := mem.ReadDir("/")
+	// for nfs.ReadDirPlus in case of many files
+	dirF1, err := mem.Open("/")
+	defer dirF1.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
-	shouldBeNames := []string{".", ".."}
-	for _, f := range dirF1 {
-		shouldBeNames = append(shouldBeNames, f.Name())
+	shouldBeNames, err := dirF1.Readdirnames(-1)
+	if err != nil {
+		t.Fatal(err)
 	}
 	for i := 0; i < 100; i++ {
 		fName := fmt.Sprintf("f-%03d.txt", i)
@@ -104,6 +105,7 @@ func TestNFS(t *testing.T) {
 		}
 		f.Close()
 	}
+	shouldBeNames = append(shouldBeNames, ".", "..")
 
 	entities, err := target.ReadDirPlus("/")
 	if err != nil {
