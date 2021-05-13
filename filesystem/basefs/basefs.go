@@ -30,3 +30,11 @@ func NewOsFS(path string) filesystem.FS {
 func NewBasePathFS(source afero.Fs, path string) filesystem.FS {
 	return New(afero.NewBasePathFs(source, path))
 }
+
+func (b *BaseFS) SetSource(source afero.Fs) {
+	b.source = source
+}
+
+func (b *BaseFS) GetSource() afero.Fs {
+	return b.source
+}
